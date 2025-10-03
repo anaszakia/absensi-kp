@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catalyst - Login</title>
+    <title>Sistem Absensi - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -56,7 +56,7 @@
                 <div class="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
                     <div class="w-4 h-4 bg-white rounded-full"></div>
                 </div>
-                <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Catalyst</h1>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Sistem Absensi</h1>
             </div>
         </div>
 
@@ -67,7 +67,7 @@
         </div>
 
         <!-- Social Login Buttons -->
-        <div class="space-y-3 mb-6 fade-in-up stagger-3">
+        {{-- <div class="space-y-3 mb-6 fade-in-up stagger-3">
             <button class="social-btn w-full flex items-center justify-center px-4 py-3 border border-gray-200 rounded-xl text-gray-700 bg-white hover:bg-gray-50 font-medium shadow-sm">
                 <svg class="w-5 h-5 mr-3" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -84,17 +84,17 @@
                 </svg>
                 Masuk dengan Apple
             </button>
-        </div>
+        </div> --}}
 
         <!-- Divider -->
-        <div class="relative mb-6 fade-in-up stagger-3">
+        {{-- <div class="relative mb-6 fade-in-up stagger-3">
             <div class="absolute inset-0 flex items-center">
                 <div class="w-full border-t border-gray-200"></div>
             </div>
             <div class="relative flex justify-center text-sm">
                 <span class="px-4 bg-white text-gray-500 font-medium">atau masuk dengan email</span>
             </div>
-        </div>
+        </div> --}}
 
         <!-- Login Form -->
         <form class="space-y-6 fade-in-up stagger-4" method="POST" action="{{ route('login') }}">
@@ -156,7 +156,7 @@
             </div>
 
             <!-- Remember Me & Forgot Password -->
-            <div class="flex items-center justify-between">
+            {{-- <div class="flex items-center justify-between">
                 <div class="flex items-center">
                     <input 
                         id="remember" 
@@ -170,7 +170,7 @@
                 <div class="text-sm">
                     <a href="/forgot-password" class="text-purple-600 hover:text-purple-700 font-medium transition-colors">Lupa password?</a>
                 </div>
-            </div>
+            </div> --}}
 
             <!-- Login Button -->
             <button 
@@ -182,7 +182,7 @@
             </button>
 
             <!-- Sign Up Link -->
-            <div class="text-center mt-8">
+            {{-- <div class="text-center mt-8">
                 <p class="text-sm text-gray-600">
                     Belum punya akun? 
                     <a href="/register" class="text-purple-600 hover:text-purple-700 font-semibold transition-colors">
@@ -190,7 +190,7 @@
                         <i class="fas fa-arrow-right ml-1"></i>
                     </a>
                 </p>
-            </div>
+            </div> --}}
         </form>
     </div>
 
