@@ -10,6 +10,9 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\WorkingHourController;
 use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\AttendanceReportController;
+use App\Http\Controllers\UserScheduleController;
+use App\Http\Controllers\Admin\SubjectController;
+use App\Http\Controllers\Admin\UserScheduleController as AdminScheduleController;
 
 
 // hanya bisa diakses tamu (belum login)
@@ -63,12 +66,25 @@ Route::middleware(['auth', 'role:admin', 'log.sensitive'])
         // Leave Request Management
         Route::get('/leave-requests', [LeaveRequestController::class, 'adminIndex'])->name('leave-requests.index');
         Route::post('/leave-requests/{leaveRequest}/action', [LeaveRequestController::class, 'adminAction'])->name('leave-requests.action');
-        // Tambahkan resource lain untuk admin jika diperlukan
-            // CRUD Jam Kerja
-            Route::resource('working-hours', WorkingHourController::class);
-            // Manajemen User untuk Jam Kerja
-            Route::get('working-hours/{workingHour}/users', [WorkingHourController::class, 'users'])->name('working-hours.users');
-            Route::post('working-hours/{workingHour}/assign-users', [WorkingHourController::class, 'assignUsers'])->name('working-hours.assign-users');
+        
+        // CRUD Jam Kerja
+        Route::resource('working-hours', WorkingHourController::class);
+        // Manajemen User untuk Jam Kerja
+        Route::get('working-hours/{workingHour}/users', [WorkingHourController::class, 'users'])->name('working-hours.users');
+        Route::post('working-hours/{workingHour}/assign-users', [WorkingHourController::class, 'assignUsers'])->name('working-hours.assign-users');
+        
+        // Subject Management
+        Route::resource('subjects', SubjectController::class);
+        
+        // User Schedule Management
+        Route::get('schedules', [AdminScheduleController::class, 'index'])->name('schedules.index');
+        Route::get('schedules/create', [AdminScheduleController::class, 'create'])->name('schedules.create');
+        Route::get('schedules/check-conflicts', [AdminScheduleController::class, 'checkConflicts'])->name('schedules.check-conflicts');
+        Route::post('schedules', [AdminScheduleController::class, 'store'])->name('schedules.store');
+        Route::get('schedules/{schedule}', [AdminScheduleController::class, 'show'])->name('schedules.show');
+        Route::get('schedules/{schedule}/edit', [AdminScheduleController::class, 'edit'])->name('schedules.edit');
+        Route::put('schedules/{schedule}', [AdminScheduleController::class, 'update'])->name('schedules.update');
+        Route::delete('schedules/{schedule}', [AdminScheduleController::class, 'destroy'])->name('schedules.destroy');
     });
 
 // auth user
@@ -90,6 +106,10 @@ Route::middleware(['auth', 'role:user', 'log.sensitive'])
         Route::get('/leave-requests', [LeaveRequestController::class, 'index'])->name('leave-requests.index');
         Route::get('/leave-requests/create', [LeaveRequestController::class, 'create'])->name('leave-requests.create');
         Route::post('/leave-requests', [LeaveRequestController::class, 'store'])->name('leave-requests.store');
+        
+        // User Schedule Routes
+        Route::get('/schedules', [UserScheduleController::class, 'index'])->name('schedules.index');
+        Route::get('/schedules/calendar', [UserScheduleController::class, 'calendar'])->name('schedules.calendar');
     });
 
 Route::redirect('/', '/login');

@@ -74,6 +74,14 @@
                             <i class="fas fa-clipboard-check w-4 h-4 mr-3"></i>
                             <span class="sidebar-text">Audit Log</span>
                         </a>
+                        <a href="{{ route('admin.subjects.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-600 rounded-md hover:bg-gray-100 hover:text-blue-600 transition-all duration-200">
+                            <i class="fas fa-book w-4 h-4 mr-3"></i>
+                            <span class="sidebar-text">Mata Pelajaran</span>
+                        </a>
+                        <a href="{{ route('admin.schedules.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-600 rounded-md hover:bg-gray-100 hover:text-blue-600 transition-all duration-200">
+                            <i class="fas fa-calendar-alt w-4 h-4 mr-3"></i>
+                            <span class="sidebar-text">Jadwal Mengajar</span>
+                        </a>
                     </div>
                 </li>
                 
@@ -97,6 +105,18 @@
                     <a href="{{ route('user.leave-requests.index') }}" class="flex items-center px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group">
                         <i class="fas fa-calendar-times w-5 h-5 mr-3 text-gray-500 group-hover:text-blue-500"></i>
                         <span class="sidebar-text">Ajukan Ijin</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('user.schedules.index') }}" class="flex items-center px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group">
+                        <i class="fas fa-calendar-alt w-5 h-5 mr-3 text-gray-500 group-hover:text-blue-500"></i>
+                        <span class="sidebar-text">Jadwal Mengajar</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('user.schedules.calendar') }}" class="flex items-center px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group">
+                        <i class="fas fa-calendar-week w-5 h-5 mr-3 text-gray-500 group-hover:text-blue-500"></i>
+                        <span class="sidebar-text">Kalender Jadwal</span>
                     </a>
                 </li>
             @endif

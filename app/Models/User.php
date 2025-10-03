@@ -87,4 +87,34 @@ class User extends Authenticatable
     {
         return $this->hasMany(LeaveRequest::class);
     }
+    
+    /**
+     * Relasi dengan UserSchedule (one-to-many)
+     */
+    public function schedules()
+    {
+        return $this->hasMany(UserSchedule::class);
+    }
+    
+    /**
+     * Subjects assigned to this user through schedules
+     */
+    public function subjects()
+    {
+        return $this->belongsToMany(Subject::class, 'user_schedules')
+            ->withPivot(['day', 'start_time', 'end_time', 'classroom'])
+            ->withTimestamps();
+    }
+    
+    /**
+     * Get schedules for a specific day
+     */
+    public function getSchedulesForDay($day)
+    {
+        return $this->schedules()
+            ->where('day', $day)
+            ->where('is_active', true)
+            ->orderBy('start_time')
+            ->get();
+    }
 }
