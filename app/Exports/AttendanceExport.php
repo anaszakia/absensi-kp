@@ -30,7 +30,7 @@ class AttendanceExport implements FromQuery, WithHeadings, WithMapping, ShouldAu
         $status = $this->request->input('status');
 
         // Query dasar
-        $query = Attendance::with(['user', 'workingHour'])
+        $query = Attendance::with(['user', 'userSchedule.subject'])
             ->whereBetween('date', [$startDate, $endDate])
             ->when($userId, function ($query) use ($userId) {
                 return $query->where('user_id', $userId);
@@ -49,28 +49,32 @@ class AttendanceExport implements FromQuery, WithHeadings, WithMapping, ShouldAu
             'Tanggal',
             'NIP',
             'Nama',
-            'Jam Kerja',
+            'Mata Pelajaran',
             'Jam Masuk',
             'Jam Pulang',
             'Status',
-            'Jadwal Masuk',
-            'Jadwal Pulang',
+            'Jadwal Mulai',
+            'Jadwal Selesai',
             'Keterangan'
         ];
     }
 
     public function map($attendance): array
     {
+        $subjectName = $attendance->userSchedule->subject->name ?? 'Tidak ada jadwal';
+        $startTime = $attendance->userSchedule ? \Carbon\Carbon::parse($attendance->userSchedule->start_time)->format('H:i') : '-';
+        $endTime = $attendance->userSchedule ? \Carbon\Carbon::parse($attendance->userSchedule->end_time)->format('H:i') : '-';
+        
         return [
             $attendance->date->format('d/m/Y'),
             $attendance->user->nip ?? '-',
             $attendance->user->name,
-            $attendance->workingHour->nama,
+            $subjectName,
             $attendance->check_in ? \Carbon\Carbon::parse($attendance->check_in)->format('H:i') : '-',
             $attendance->check_out ? \Carbon\Carbon::parse($attendance->check_out)->format('H:i') : '-',
             $this->formatStatus($attendance->status),
-            $attendance->workingHour->jam_masuk,
-            $attendance->workingHour->jam_pulang,
+            $startTime,
+            $endTime,
             $attendance->notes
         ];
     }

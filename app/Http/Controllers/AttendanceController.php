@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\UserSchedule;
+use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
@@ -13,15 +15,40 @@ class AttendanceController extends Controller
     {
         $user = auth()->user();
         
-        // Dapatkan jam kerja yang terkait dengan user
-        $workingHours = $user->workingHours;
+        // Dapatkan jadwal mata pelajaran untuk hari ini
+        $today = Carbon::now()->locale('id')->dayName;
+        $dayMapping = [
+            'Monday' => 'Senin',
+            'Tuesday' => 'Selasa',
+            'Wednesday' => 'Rabu',
+            'Thursday' => 'Kamis',
+            'Friday' => 'Jumat',
+            'Saturday' => 'Sabtu',
+            'Sunday' => 'Minggu',
+        ];
         
-        // Ambil absensi hari ini
+        // Jika hari dalam bahasa Inggris, konversi ke Indonesia
+        if (isset($dayMapping[$today])) {
+            $today = $dayMapping[$today];
+        }
+        
+        // Dapatkan jadwal hari ini
+        $todaySchedules = $user->schedules()
+            ->where('day', $today)
+            ->where('is_active', true)
+            ->with('subject')
+            ->orderBy('start_time')
+            ->get();
+        
+        // Ambil absensi hari ini untuk setiap jadwal
+        $todayAttendances = $user->todayAttendances();
+        
+        // Untuk kompatibilitas dengan view lama
         $todayAttendance = $user->todayAttendance();
         
         // Ambil riwayat absensi 7 hari terakhir
         $recentAttendances = $user->attendances()
-            ->with('workingHour')
+            ->with(['userSchedule', 'userSchedule.subject'])
             ->latest('date')
             ->take(7)
             ->get();
@@ -47,10 +74,7 @@ class AttendanceController extends Controller
                 ->count(),
         ];
         
-        // Cari jam kerja default user untuk hari ini (jam kerja pertama yang ditemukan)
-        $defaultWorkingHour = $workingHours->first();
-        
-        return view('user.dashboard', compact('user', 'workingHours', 'todayAttendance', 'recentAttendances', 'monthlyStats', 'defaultWorkingHour'));
+        return view('user.dashboard', compact('user', 'todaySchedules', 'todayAttendance', 'todayAttendances', 'recentAttendances', 'monthlyStats'));
     }
     
     /**
@@ -59,48 +83,72 @@ class AttendanceController extends Controller
     public function checkIn(Request $request)
     {
         $user = auth()->user();
-        $workingHourId = $request->input('working_hour_id');
+        $userScheduleId = $request->input('user_schedule_id');
         $notes = $request->input('notes');
         
-        // Validasi working hour
-        if (!$workingHourId) {
-            // Jika tidak ada working_hour_id, ambil jam kerja pertama user
-            $defaultWorkingHour = $user->workingHours->first();
-            if (!$defaultWorkingHour) {
-                return back()->with('error', 'Anda belum memiliki jadwal jam kerja. Silakan hubungi admin.');
-            }
-            $workingHourId = $defaultWorkingHour->id;
+        // Validasi user schedule
+        if (!$userScheduleId) {
+            return back()->with('error', 'Pilih jadwal mata pelajaran untuk absensi.');
         }
         
-        $workingHour = \App\Models\WorkingHour::find($workingHourId);
-        if (!$workingHour) {
-            return back()->with('error', 'Jam kerja tidak ditemukan.');
+        $userSchedule = \App\Models\UserSchedule::find($userScheduleId);
+        if (!$userSchedule) {
+            return back()->with('error', 'Jadwal mata pelajaran tidak ditemukan.');
         }
         
-        // Cek apakah sudah ada absensi hari ini
-        $todayAttendance = $user->todayAttendance();
-        if ($todayAttendance && $todayAttendance->check_in) {
-            return back()->with('error', 'Anda sudah melakukan absen masuk hari ini.');
+        // Pastikan jadwal adalah milik user yang sedang login
+        if ($userSchedule->user_id != $user->id) {
+            return back()->with('error', 'Jadwal mata pelajaran tidak sesuai.');
+        }
+        
+        // Pastikan jadwal adalah untuk hari ini
+        $today = Carbon::now()->locale('id')->dayName;
+        $dayMapping = [
+            'Monday' => 'Senin',
+            'Tuesday' => 'Selasa',
+            'Wednesday' => 'Rabu',
+            'Thursday' => 'Kamis',
+            'Friday' => 'Jumat',
+            'Saturday' => 'Sabtu',
+            'Sunday' => 'Minggu',
+        ];
+        
+        if (isset($dayMapping[$today])) {
+            $today = $dayMapping[$today];
+        }
+        
+        if ($userSchedule->day !== $today) {
+            return back()->with('error', 'Jadwal mata pelajaran hanya berlaku untuk hari ' . $userSchedule->day . '.');
+        }
+        
+        // Cek apakah sudah ada absensi untuk jadwal ini hari ini
+        $existingAttendance = \App\Models\Attendance::where('user_id', $user->id)
+            ->where('user_schedule_id', $userScheduleId)
+            ->whereDate('date', now()->toDateString())
+            ->first();
+            
+        if ($existingAttendance && $existingAttendance->check_in) {
+            return back()->with('error', 'Anda sudah melakukan absen masuk untuk jadwal ini hari ini.');
         }
         
         $now = now();
-        $jamMasuk = \Carbon\Carbon::createFromFormat('H:i:s', $workingHour->jam_masuk);
+        $jamMasuk = \Carbon\Carbon::createFromFormat('H:i:s', $userSchedule->start_time);
         
-        // Cek keterlambatan
+        // Cek keterlambatan (toleransi 15 menit)
         $telatDalamMenit = $now->diffInMinutes($jamMasuk, false);
         
-        // Jika terlambat lebih dari 60 menit (1 jam), status = tidak_masuk
-        if ($now->format('H:i:s') > $workingHour->jam_masuk && $telatDalamMenit < -60) {
-            $status = 'tidak_masuk';
+        // Jika terlambat lebih dari 15 menit dari waktu mulai, status = terlambat
+        if ($now->format('H:i:s') > $jamMasuk->addMinutes(15)->format('H:i:s')) {
+            $status = 'terlambat';
         } else {
-            $status = $now->format('H:i:s') <= $workingHour->jam_masuk ? 'tepat_waktu' : 'terlambat';
+            $status = 'tepat_waktu';
         }
         
-        // Jika belum ada absensi, buat baru
-        if (!$todayAttendance) {
+        // Buat atau update absensi
+        if (!$existingAttendance) {
             $attendance = \App\Models\Attendance::create([
                 'user_id' => $user->id,
-                'working_hour_id' => $workingHourId,
+                'user_schedule_id' => $userScheduleId,
                 'date' => now()->toDateString(),
                 'check_in' => now()->toTimeString(),
                 'status' => $status,
@@ -108,8 +156,7 @@ class AttendanceController extends Controller
             ]);
         } else {
             // Update absensi yang ada
-            $todayAttendance->update([
-                'working_hour_id' => $workingHourId,
+            $existingAttendance->update([
                 'check_in' => now()->toTimeString(),
                 'status' => $status,
                 'notes' => $notes
@@ -135,32 +182,37 @@ class AttendanceController extends Controller
     public function checkOut(Request $request)
     {
         $user = auth()->user();
+        $userScheduleId = $request->input('user_schedule_id');
         $notes = $request->input('notes');
         
-        // Cek apakah sudah ada absensi hari ini
-        $todayAttendance = $user->todayAttendance();
-        if (!$todayAttendance) {
-            return back()->with('error', 'Anda belum melakukan absen masuk hari ini.');
+        // Validasi user schedule
+        if (!$userScheduleId) {
+            return back()->with('error', 'Pilih jadwal mata pelajaran untuk absensi pulang.');
         }
         
-        if ($todayAttendance->check_out) {
-            return back()->with('error', 'Anda sudah melakukan absen pulang hari ini.');
+        // Cek apakah sudah ada absensi untuk jadwal ini hari ini
+        $attendance = \App\Models\Attendance::where('user_id', $user->id)
+            ->where('user_schedule_id', $userScheduleId)
+            ->whereDate('date', now()->toDateString())
+            ->first();
+            
+        if (!$attendance) {
+            return back()->with('error', 'Anda belum melakukan absen masuk untuk jadwal ini hari ini.');
         }
         
-        // Cek apakah sudah waktunya pulang
-        $workingHour = $todayAttendance->workingHour;
-        $jamPulang = \Carbon\Carbon::createFromFormat('H:i:s', $workingHour->jam_pulang);
+        if ($attendance->check_out) {
+            return back()->with('error', 'Anda sudah melakukan absen pulang untuk jadwal ini hari ini.');
+        }
+        
+        // Cek apakah sudah waktunya pulang berdasarkan jadwal
+        $userSchedule = \App\Models\UserSchedule::find($userScheduleId);
+        $jamPulang = \Carbon\Carbon::createFromFormat('H:i:s', $userSchedule->end_time);
         $now = now();
         
-        // Jika belum waktunya pulang (waktu sekarang kurang dari jam pulang)
-        if ($now->format('H:i:s') < $workingHour->jam_pulang) {
-            return back()->with('warning', 'Belum waktunya pulang. Jam pulang Anda adalah ' . $jamPulang->format('H:i') . '.');
-        }
-        
         // Update absensi
-        $todayAttendance->update([
+        $attendance->update([
             'check_out' => now()->toTimeString(),
-            'notes' => $notes ? $todayAttendance->notes . ' | Pulang: ' . $notes : $todayAttendance->notes
+            'notes' => $notes ? $attendance->notes . ' | Pulang: ' . $notes : $attendance->notes
         ]);
         
         // Log aktivitas
@@ -188,7 +240,7 @@ class AttendanceController extends Controller
         $year = $request->input('year', now()->format('Y'));
         
         $attendances = $user->attendances()
-            ->with('workingHour')
+            ->with('userSchedule.subject')
             ->whereYear('date', $year)
             ->whereMonth('date', $month)
             ->latest('date')
@@ -206,23 +258,30 @@ class AttendanceController extends Controller
         
         $request->validate([
             'date' => 'required|date|after_or_equal:today',
-            'working_hour_id' => 'required|exists:working_hours,id',
+            'user_schedule_id' => 'required|exists:user_schedules,id',
             'notes' => 'required|string|min:5',
         ]);
         
-        // Cek apakah sudah ada absensi pada tanggal tersebut
-        $existingAttendance = $user->attendances()
+        // Validasi jadwal milik user
+        $userSchedule = \App\Models\UserSchedule::find($request->user_schedule_id);
+        if ($userSchedule->user_id != $user->id) {
+            return back()->with('error', 'Jadwal mata pelajaran tidak sesuai.');
+        }
+        
+        // Cek apakah sudah ada absensi pada tanggal dan jadwal tersebut
+        $existingAttendance = \App\Models\Attendance::where('user_id', $user->id)
+            ->where('user_schedule_id', $request->user_schedule_id)
             ->whereDate('date', $request->date)
             ->first();
             
         if ($existingAttendance) {
-            return back()->with('error', 'Anda sudah memiliki catatan absensi pada tanggal tersebut.');
+            return back()->with('error', 'Anda sudah memiliki catatan absensi untuk jadwal ini pada tanggal tersebut.');
         }
         
         // Buat absensi dengan status ijin
         $attendance = \App\Models\Attendance::create([
             'user_id' => $user->id,
-            'working_hour_id' => $request->working_hour_id,
+            'user_schedule_id' => $request->user_schedule_id,
             'date' => $request->date,
             'status' => 'ijin',
             'notes' => $request->notes

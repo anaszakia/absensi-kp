@@ -23,7 +23,7 @@ class AttendanceReportController extends Controller
         $status = $request->input('status');
 
         // Query dasar
-        $attendances = Attendance::with(['user', 'workingHour'])
+        $attendances = Attendance::with(['user', 'userSchedule.subject'])
             ->whereBetween('date', [$startDate, $endDate])
             ->when($userId, function ($query) use ($userId) {
                 return $query->where('user_id', $userId);

@@ -8,6 +8,10 @@
         <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl shadow-lg p-6 md:p-8 text-white relative overflow-hidden">
             <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -mt-20 -mr-20"></div>
             <div class="absolute bottom-0 left-0 w-32 h-32 bg-white opacity-10 rounded-full -mb-10 -ml-10"></div>
+            <!-- Logo di pojok kanan atas -->
+            <div class="absolute top-4 right-4 md:top-6 md:right-6">
+                <img src="{{ asset('images/logo_azzuhdi.png') }}" alt="Logo Azzuhdi" class="h-12 md:h-16">
+            </div>
             <div class="relative z-10 flex items-center">
                 <!-- User Avatar/Photo -->
                 <div class="mr-4 md:mr-6 flex-shrink-0">
@@ -26,9 +30,15 @@
                     <div class="mt-4">
                         <div class="bg-white bg-opacity-20 rounded-lg px-4 py-2 inline-flex items-center">
                             <span class="text-sm font-semibold">Status absensi hari ini:</span>
-                            @if($todayAttendance && $todayAttendance->check_in && $todayAttendance->check_out)
+                            @php
+                                $attendances = $user->todayAttendances();
+                                $hasCompleteAttendance = $attendances->where('check_out', '!=', null)->count() > 0;
+                                $hasCheckInOnly = $attendances->where('check_in', '!=', null)->where('check_out', null)->count() > 0;
+                            @endphp
+                            
+                            @if($hasCompleteAttendance)
                                 <span class="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full font-medium">Selesai</span>
-                            @elseif($todayAttendance && $todayAttendance->check_in)
+                            @elseif($hasCheckInOnly)
                                 <span class="ml-2 px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full font-medium">Absen Masuk</span>
                             @else
                                 <span class="ml-2 px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full font-medium">Belum Absen</span>
@@ -66,31 +76,95 @@
             </div>
         </div>
                 
-        @if($workingHours->count() > 0)
         <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-md p-5 border border-purple-200 hover:shadow-lg transition-shadow">
             <div class="flex items-center">
                 <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center mr-3 shadow-md flex-shrink-0">
-                    <i class="fas fa-business-time text-white text-lg"></i>
+                    <i class="fas fa-book text-white text-lg"></i>
                 </div>
                 <div class="min-w-0">
-                    <p class="text-xs font-medium text-purple-600 mb-1">Shift Anda</p>
-                    <p class="text-lg font-bold text-gray-900 truncate">{{ $defaultWorkingHour->nama }}</p>
-                    <p class="text-xs font-medium text-gray-600">{{ $defaultWorkingHour->jam_masuk }} - {{ $defaultWorkingHour->jam_pulang }}</p>
+                    <p class="text-xs font-medium text-purple-600 mb-1">Jadwal Hari Ini</p>
+                    <p class="text-lg font-bold text-gray-900 truncate">{{ $todaySchedules->count() }} Mata Pelajaran</p>
+                    <p class="text-xs font-medium text-gray-600">{{ now()->locale('id')->dayName }}</p>
                 </div>
             </div>
         </div>
-        @endif
     </div>
     
-    <!-- Attendance Status Card -->
+    <!-- Jadwal dan Status Kehadiran Hari Ini -->
     <div class="mb-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Status Kehadiran Hari Ini</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Jadwal Mata Pelajaran Hari Ini</h3>
+        
+        @if($todaySchedules->count() > 0)
+            <div class="grid grid-cols-1 gap-4">
+            @foreach($todaySchedules as $schedule)
+                @php
+                    $attendance = $user->todayAttendanceForSchedule($schedule->id);
+                @endphp
+                <!-- Schedule Card -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+                    <div class="h-1.5 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h4 class="text-lg font-bold text-gray-900">{{ $schedule->subject->name }}</h4>
+                                <p class="text-sm text-gray-600">{{ \Carbon\Carbon::parse($schedule->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($schedule->end_time)->format('H:i') }}</p>
+                                @if($schedule->classroom)
+                                    <p class="text-sm text-gray-600">Ruang: {{ $schedule->classroom }}</p>
+                                @endif
+                            </div>
+                            <div>
+                                @if($attendance && $attendance->check_in && $attendance->check_out)
+                                    <span class="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full font-medium">Selesai</span>
+                                @elseif($attendance && $attendance->check_in)
+                                    <span class="px-3 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full font-medium">Absen Masuk</span>
+                                @else
+                                    <span class="px-3 py-1 text-xs bg-red-100 text-red-800 rounded-full font-medium">Belum Absen</span>
+                                @endif
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col sm:flex-row sm:justify-between gap-2 mt-4">
+                            @if(!$attendance || !$attendance->check_in)
+                                <form action="{{ route('user.attendance.check-in') }}" method="POST" class="flex-1">
+                                    @csrf
+                                    <input type="hidden" name="user_schedule_id" value="{{ $schedule->id }}">
+                                    <button type="submit" class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg text-sm flex items-center justify-center transition-colors">
+                                        <i class="fas fa-sign-in-alt mr-2"></i> Absen Masuk
+                                    </button>
+                                </form>
+                            @elseif($attendance && $attendance->check_in && !$attendance->check_out)
+                                <form action="{{ route('user.attendance.check-out') }}" method="POST" class="flex-1">
+                                    @csrf
+                                    <input type="hidden" name="user_schedule_id" value="{{ $schedule->id }}">
+                                    <button type="submit" class="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg text-sm flex items-center justify-center transition-colors">
+                                        <i class="fas fa-sign-out-alt mr-2"></i> Absen Pulang
+                                    </button>
+                                </form>
+                            @else
+                                <div class="flex-1 px-4 py-2 bg-gray-200 text-gray-600 font-medium rounded-lg text-sm text-center">
+                                    <i class="fas fa-check-circle mr-2"></i> Absensi Selesai
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+            </div>
+        @else
+            <div class="bg-white rounded-xl shadow-md p-5 border border-gray-200 text-center">
+                <i class="fas fa-calendar-day text-gray-400 text-4xl mb-2"></i>
+                <h4 class="text-lg font-medium text-gray-900">Tidak ada jadwal hari ini</h4>
+                <p class="text-gray-600">Anda tidak memiliki jadwal mata pelajaran untuk hari {{ now()->locale('id')->dayName }}</p>
+            </div>
+        @endif
+        
+        <!-- Status Card Lama - kita sembunyikan untuk sementara -->
+        <div class="hidden mt-6">
             <!-- Check-in Status Card -->
             <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
                 <div class="h-1.5 bg-gradient-to-r from-green-400 to-blue-500"></div>
                 <div class="p-5">
-                    @if($todayAttendance && $todayAttendance->check_in)
+                    @if(false)
                         @if($todayAttendance->status == 'tepat_waktu')
                             <div class="flex items-start">
                                 <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mr-3 shadow-md flex-shrink-0">
@@ -213,16 +287,15 @@
                             <h4 class="text-lg font-semibold text-gray-900">Absen Masuk</h4>
                         </div>
                         
-                        @if($workingHours->count() > 0)
+                        @if($todaySchedules->count() > 0)
                             <div class="mb-4 bg-green-50 p-3 rounded-lg border border-green-200">
                                 <p class="text-sm text-green-800">
                                     <i class="fas fa-info-circle mr-1"></i>
-                                    Jam Kerja: <span class="font-medium">{{ $defaultWorkingHour->nama }}</span>
+                                    Jadwal Hari Ini: <span class="font-medium">{{ $todaySchedules->count() }} mata pelajaran</span>
                                 </p>
                                 <p class="text-xs text-green-700 mt-1">
-                                    {{ $defaultWorkingHour->jam_masuk }} - {{ $defaultWorkingHour->jam_pulang }}
+                                    Silakan pilih jadwal pada daftar di atas
                                 </p>
-                                <input type="hidden" name="working_hour_id" value="{{ $defaultWorkingHour->id }}">
                             </div>
                             <input type="hidden" name="notes" value="-">
                             <button type="submit" 
@@ -232,7 +305,7 @@
                         @else
                             <div class="text-center p-4 bg-red-50 rounded-lg border border-red-200">
                                 <i class="fas fa-exclamation-triangle text-red-500 text-xl mb-2"></i>
-                                <p class="text-sm text-red-600 font-medium">Anda belum memiliki jadwal jam kerja. Silakan hubungi admin.</p>
+                                <p class="text-sm text-red-600 font-medium">Anda tidak memiliki jadwal mata pelajaran hari ini.</p>
                             </div>
                         @endif
                     </form>
@@ -254,10 +327,10 @@
                         <div class="mb-4 bg-indigo-50 p-3 rounded-lg border border-indigo-200">
                             <p class="text-sm text-indigo-800">
                                 <i class="fas fa-info-circle mr-1"></i>
-                                Jam Kerja: <span class="font-medium">{{ $todayAttendance->workingHour->nama }}</span>
+                                <span class="font-medium">Absen Pulang</span>
                             </p>
                             <p class="text-xs text-indigo-700 mt-1">
-                                {{ $todayAttendance->workingHour->jam_masuk }} - {{ $todayAttendance->workingHour->jam_pulang }}
+                                Silakan klik tombol di bawah untuk absen pulang
                             </p>
                         </div>
                         <input type="hidden" name="notes" value="-">
@@ -287,7 +360,7 @@
                     <thead>
                         <tr class="bg-gray-50">
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shift</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mata Pelajaran</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Masuk</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pulang</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -305,8 +378,14 @@
                                     </div>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <p class="text-sm font-medium text-gray-900">{{ $attendance->workingHour->nama }}</p>
-                                    <p class="text-xs text-gray-500">{{ $attendance->workingHour->jam_masuk }} - {{ $attendance->workingHour->jam_pulang }}</p>
+                                    <p class="text-sm font-medium text-gray-900">{{ $attendance->userSchedule->subject->name ?? 'Tidak ada jadwal' }}</p>
+                                    <p class="text-xs text-gray-500">
+                                        @if($attendance->userSchedule)
+                                            {{ \Carbon\Carbon::parse($attendance->userSchedule->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($attendance->userSchedule->end_time)->format('H:i') }}
+                                        @else
+                                            -
+                                        @endif
+                                    </p>
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap">
                                     @if($attendance->check_in)

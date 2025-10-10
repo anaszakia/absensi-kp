@@ -7,7 +7,7 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\WorkingHourController;
+// WorkingHourController telah dihapus karena tidak digunakan lagi
 use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\AttendanceReportController;
 use App\Http\Controllers\UserScheduleController;
@@ -67,11 +67,7 @@ Route::middleware(['auth', 'role:admin', 'log.sensitive'])
         Route::get('/leave-requests', [LeaveRequestController::class, 'adminIndex'])->name('leave-requests.index');
         Route::post('/leave-requests/{leaveRequest}/action', [LeaveRequestController::class, 'adminAction'])->name('leave-requests.action');
         
-        // CRUD Jam Kerja
-        Route::resource('working-hours', WorkingHourController::class);
-        // Manajemen User untuk Jam Kerja
-        Route::get('working-hours/{workingHour}/users', [WorkingHourController::class, 'users'])->name('working-hours.users');
-        Route::post('working-hours/{workingHour}/assign-users', [WorkingHourController::class, 'assignUsers'])->name('working-hours.assign-users');
+        // Jam kerja telah dihapus, diganti dengan absensi berdasarkan jadwal mata pelajaran
         
         // Subject Management
         Route::resource('subjects', SubjectController::class);

@@ -35,30 +35,54 @@
                         </div>
                         
                         <div>
-                            <label for="working_hour_id" class="block text-sm font-medium text-gray-700 mb-1">Jam Kerja *</label>
-                            @if($workingHours->count() == 1)
-                                <!-- Jika hanya ada satu jam kerja, otomatis pilih itu -->
-                                <input type="hidden" name="working_hour_id" value="{{ $workingHours->first()->id }}">
-                                <div class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg px-3 py-2.5 flex items-center">
-                                    <span>{{ $workingHours->first()->nama }} ({{ $workingHours->first()->jam_masuk }} - {{ $workingHours->first()->jam_pulang }})</span>
+                            <label for="user_schedule_id" class="block text-sm font-medium text-gray-700 mb-1">Jadwal Mata Pelajaran *</label>
+                            @php
+                                $hasSchedules = collect($schedulesByDay)->flatten()->isNotEmpty();
+                                $now = now();
+                                $currentDayName = $now->locale('id')->dayName;
+                                
+                                // Indonesian day mapping
+                                $dayMappingId = [
+                                    'Monday' => 'Senin',
+                                    'Tuesday' => 'Selasa',
+                                    'Wednesday' => 'Rabu',
+                                    'Thursday' => 'Kamis',
+                                    'Friday' => 'Jumat',
+                                    'Saturday' => 'Sabtu',
+                                    'Sunday' => 'Minggu',
+                                ];
+                                
+                                // Get the Indonesian day name
+                                if (isset($dayMappingId[$now->englishDayOfWeek])) {
+                                    $currentDayName = $dayMappingId[$now->englishDayOfWeek];
+                                }
+                            @endphp
+                            @if($hasSchedules)
+                                <div class="relative">
+                                    <select id="user_schedule_id" name="user_schedule_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 @error('user_schedule_id') border-red-500 @enderror" required>
+                                        <option value="">-- Pilih Jadwal --</option>
+                                        @foreach($schedulesByDay as $day => $schedules)
+                                            @if($schedules->isNotEmpty())
+                                                <optgroup label="{{ $day }}">
+                                                    @foreach($schedules as $schedule)
+                                                        <option value="{{ $schedule->id }}" {{ old('user_schedule_id') == $schedule->id ? 'selected' : '' }}
+                                                            {{ $day == $currentDayName ? 'data-current-day="true"' : '' }}>
+                                                            {{ $schedule->subject->name }} ({{ \Carbon\Carbon::parse($schedule->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($schedule->end_time)->format('H:i') }})
+                                                            {{ $schedule->classroom ? '- ' . $schedule->classroom : '' }}
+                                                        </option>
+                                                    @endforeach
+                                                </optgroup>
+                                            @endif
+                                        @endforeach
+                                    </select>
                                 </div>
-                            @elseif($workingHours->count() > 1)
-                                <!-- Jika ada lebih dari satu jam kerja, pilih default dan tampilkan dropdown -->
-                                <select id="working_hour_id" name="working_hour_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 @error('working_hour_id') border-red-500 @enderror" required>
-                                    @foreach($workingHours as $workingHour)
-                                        <option value="{{ $workingHour->id }}" 
-                                            {{ (old('working_hour_id') == $workingHour->id || ($loop->first && !old('working_hour_id'))) ? 'selected' : '' }}>
-                                            {{ $workingHour->nama }} ({{ $workingHour->jam_masuk }} - {{ $workingHour->jam_pulang }})
-                                        </option>
-                                    @endforeach
-                                </select>
                             @else
-                                <!-- Jika tidak ada jam kerja -->
+                                <!-- Jika tidak ada jadwal -->
                                 <div class="bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm rounded-lg px-3 py-2.5">
-                                    <i class="fas fa-exclamation-triangle mr-2"></i>Anda belum memiliki jam kerja. Silakan hubungi admin.
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>Anda belum memiliki jadwal mata pelajaran. Silakan hubungi admin.
                                 </div>
                             @endif
-                            @error('working_hour_id')
+                            @error('user_schedule_id')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
@@ -98,4 +122,47 @@
             </div>
         </div>
     </div>
+@endsection
+
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Map date to day of week
+        const dayMapping = {
+            0: 'Minggu',
+            1: 'Senin',
+            2: 'Selasa',
+            3: 'Rabu',
+            4: 'Kamis',
+            5: 'Jumat',
+            6: 'Sabtu'
+        };
+        
+        // Function to update date info
+        function updateDateInfo() {
+            const dateInput = document.getElementById('date');
+            const scheduleSelect = document.getElementById('user_schedule_id');
+            
+            if (!dateInput || !scheduleSelect) return;
+            
+            // Get day of week from selected date (0-6)
+            const selectedDate = new Date(dateInput.value);
+            const dayOfWeek = selectedDate.getDay(); // 0 is Sunday, 1 is Monday, etc.
+            const dayName = dayMapping[dayOfWeek];
+            
+            // Update first option to show selected day
+            const firstOption = scheduleSelect.querySelector('option[value=""]');
+            if (firstOption) {
+                firstOption.textContent = `-- Pilih Jadwal Mata Pelajaran --`;
+            }
+        }
+        
+        // Initial update
+        updateDateInfo();
+        
+        // Update when date changes
+        document.getElementById('date').addEventListener('change', updateDateInfo);
+    });
+    });
+</script>
 @endsection

@@ -124,7 +124,7 @@
                             <th class="px-4 py-3">Jam Masuk</th>
                             <th class="px-4 py-3">Jam Pulang</th>
                             <th class="px-4 py-3">Status</th>
-                            <th class="px-4 py-3">Jam Kerja</th>
+                            <th class="px-4 py-3">Mata Pelajaran</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-100">
@@ -180,8 +180,14 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-3">
-                                    <span class="text-sm">{{ $attendance->workingHour->nama }}</span>
-                                    <p class="text-xs text-gray-500">{{ $attendance->workingHour->jam_masuk }} - {{ $attendance->workingHour->jam_pulang }}</p>
+                                    <span class="text-sm">{{ $attendance->userSchedule->subject->name ?? 'Tidak ada jadwal' }}</span>
+                                    <p class="text-xs text-gray-500">
+                                        @if($attendance->userSchedule)
+                                            {{ \Carbon\Carbon::parse($attendance->userSchedule->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($attendance->userSchedule->end_time)->format('H:i') }}
+                                        @else
+                                            -
+                                        @endif
+                                    </p>
                                 </td>
                             </tr>
                         @empty

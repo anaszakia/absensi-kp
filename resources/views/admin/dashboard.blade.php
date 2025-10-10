@@ -5,7 +5,11 @@
 @section('content')
     <!-- Welcome Section -->
     <div class="mb-8">
-        <div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-6 text-white">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-6 text-white relative">
+            <!-- Logo di pojok kanan -->
+            <div class="absolute top-4 right-6">
+                <img src="{{ asset('images/logo_azzuhdi.png') }}" alt="Logo Azzuhdi" class="h-14">
+            </div>
             <h1 class="text-2xl font-bold mb-2">Selamat Datang, {{ auth()->user()->name }}!</h1>
             <p class="text-blue-100">Kelola sistem dengan mudah melalui dashboard admin</p>
         </div>

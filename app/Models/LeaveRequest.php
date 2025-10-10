@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\UserSchedule;
 
 class LeaveRequest extends Model
 {
     protected $fillable = [
         'user_id',
-        'working_hour_id',
+        'user_schedule_id', // Ganti working_hour_id dengan user_schedule_id
         'date',
         'reason',
         'attachment',
@@ -40,10 +41,10 @@ class LeaveRequest extends Model
     }
     
     /**
-     * Get the working hour associated with the leave request.
+     * Get the user schedule associated with the leave request.
      */
-    public function workingHour()
+    public function userSchedule()
     {
-        return $this->belongsTo(WorkingHour::class);
+        return $this->belongsTo(UserSchedule::class);
     }
 }

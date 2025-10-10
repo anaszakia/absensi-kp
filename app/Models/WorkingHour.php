@@ -1,27 +1,17 @@
 <?php
 namespace App\Models;
 
+// Model ini sudah tidak digunakan lagi karena perombakan sistem
+// User bebas melakukan absensi sesuai jadwal mata pelajaran, bukan berdasarkan jam kerja tetap
+
+// Commented out to prevent errors during migration process
+/*
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class WorkingHour extends Model
 {
-    use HasFactory;
-
-    protected $table = 'working_hours';
-
-    protected $fillable = [
-        'nama',
-        'jam_masuk',
-        'jam_pulang',
-    ];
-
-    /**
-     * Relasi dengan User (many-to-many)
-     */
-    public function users()
-    {
-        return $this->belongsToMany(User::class, 'user_working_hours')
-            ->withTimestamps();
-    }
+    // Model ini sudah tidak digunakan lagi
+    // Digantikan dengan sistem absensi berbasis jadwal mata pelajaran
 }
+*/

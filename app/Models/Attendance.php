@@ -3,14 +3,14 @@
 namespace App\Models;
 
 use App\Models\User;
-use App\Models\WorkingHour;
+use App\Models\UserSchedule;
 use Illuminate\Database\Eloquent\Model;
 
 class Attendance extends Model
 {
     protected $fillable = [
         'user_id',
-        'working_hour_id',
+        'user_schedule_id', // Ganti working_hour_id dengan user_schedule_id
         'date',
         'check_in',
         'check_out',
@@ -33,10 +33,10 @@ class Attendance extends Model
     }
 
     /**
-     * Get the working hour that associated with the attendance.
+     * Get the user schedule that associated with the attendance.
      */
-    public function workingHour()
+    public function userSchedule()
     {
-        return $this->belongsTo(WorkingHour::class);
+        return $this->belongsTo(UserSchedule::class);
     }
 }

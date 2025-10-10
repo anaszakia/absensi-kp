@@ -9,12 +9,17 @@
 <!-- Sidebar -->
 <div id="sidebar" class="fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-lg transform -translate-x-full transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col border-r border-gray-200">
     <!-- Sidebar Header -->
-    <div class="flex items-center justify-between h-16 px-4 border-b border-gray-200">
+    <div class="flex items-center justify-between h-16 px-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
         <div class="flex items-center space-x-3">
-            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <i class="fas fa-layer-group text-white text-sm"></i>
+            <div class="h-10 flex items-center justify-center">
+                <img src="{{ asset('images/logo_azzuhdi.png') }}" alt="Logo Azzuhdi" class="h-9 drop-shadow-sm">
             </div>
-            <span class="text-lg font-semibold text-gray-800 sidebar-text">Admin Panel</span>
+            <div>
+                <span class="text-lg font-bold text-blue-800 sidebar-text">
+                    {{ auth()->user()->role === 'admin' ? 'Admin Panel' : 'Absensi' }}
+                </span>
+                <p class="text-xs text-blue-600 sidebar-text">Sistem Absensi Digital</p>
+            </div>
         </div>
         <div class="flex items-center space-x-1">
             <!-- Desktop Toggle Button - Langsung klik tanpa hover -->
@@ -58,10 +63,6 @@
                             <i class="fas fa-users w-4 h-4 mr-3"></i>
                             <span class="sidebar-text">Users</span>
                         </a>
-                        <a href="{{ route('admin.working-hours.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-600 rounded-md hover:bg-gray-100 hover:text-blue-600 transition-all duration-200">
-                            <i class="fas fa-clock w-4 h-4 mr-3"></i>
-                            <span class="sidebar-text">Setting Jam Kerja</span>
-                        </a>
                         <a href="{{ route('admin.attendance.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-600 rounded-md hover:bg-gray-100 hover:text-blue-600 transition-all duration-200">
                             <i class="fas fa-clipboard-list w-4 h-4 mr-3"></i>
                             <span class="sidebar-text">Rekap Absensi</span>
@@ -85,12 +86,6 @@
                     </div>
                 </li>
                 
-                <li>
-                    <a href="#" class="flex items-center px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group">
-                        <i class="fas fa-cog w-5 h-5 mr-3 text-gray-500 group-hover:text-blue-500"></i>
-                        <span class="sidebar-text">Settings</span>
-                    </a>
-                </li>
             @endif
             
             <!-- Menu khusus User -->

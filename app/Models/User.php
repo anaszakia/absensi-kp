@@ -54,13 +54,15 @@ class User extends Authenticatable
     }
     
     /**
-     * Relasi dengan WorkingHour (many-to-many)
+     * DEPRECATED: Relasi dengan WorkingHour (many-to-many)
+     * Tidak digunakan lagi karena sistem jam kerja telah dihapus
+     * Absensi sekarang berdasarkan jadwal mata pelajaran
      */
-    public function workingHours()
-    {
-        return $this->belongsToMany(WorkingHour::class, 'user_working_hours')
-            ->withTimestamps();
-    }
+    // public function workingHours()
+    // {
+    //     return $this->belongsToMany(WorkingHour::class, 'user_working_hours')
+    //         ->withTimestamps();
+    // }
     
     /**
      * Relasi dengan Attendance (one-to-many)
@@ -71,11 +73,35 @@ class User extends Authenticatable
     }
     
     /**
+     * Get today's attendances
+     * Returns all attendances for today as a collection
+     */
+    public function todayAttendances()
+    {
+        return $this->attendances()
+            ->whereDate('date', now()->toDateString())
+            ->get();
+    }
+    
+    /**
      * Get today's attendance
+     * For backwards compatibility, returns the first attendance of today
+     * or null if none exist
      */
     public function todayAttendance()
     {
         return $this->attendances()
+            ->whereDate('date', now()->toDateString())
+            ->first();
+    }
+    
+    /**
+     * Get today's attendance for a specific schedule
+     */
+    public function todayAttendanceForSchedule($scheduleId)
+    {
+        return $this->attendances()
+            ->where('user_schedule_id', $scheduleId)
             ->whereDate('date', now()->toDateString())
             ->first();
     }
