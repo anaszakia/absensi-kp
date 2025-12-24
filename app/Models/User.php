@@ -73,20 +73,7 @@ class User extends Authenticatable
     }
     
     /**
-     * Get today's attendances
-     * Returns all attendances for today as a collection
-     */
-    public function todayAttendances()
-    {
-        return $this->attendances()
-            ->whereDate('date', now()->toDateString())
-            ->get();
-    }
-    
-    /**
      * Get today's attendance
-     * For backwards compatibility, returns the first attendance of today
-     * or null if none exist
      */
     public function todayAttendance()
     {
@@ -96,14 +83,21 @@ class User extends Authenticatable
     }
     
     /**
-     * Get today's attendance for a specific schedule
+     * Check if user has checked in today
      */
-    public function todayAttendanceForSchedule($scheduleId)
+    public function hasCheckedInToday()
     {
-        return $this->attendances()
-            ->where('user_schedule_id', $scheduleId)
-            ->whereDate('date', now()->toDateString())
-            ->first();
+        $attendance = $this->todayAttendance();
+        return $attendance && $attendance->check_in;
+    }
+    
+    /**
+     * Check if user has checked out today
+     */
+    public function hasCheckedOutToday()
+    {
+        $attendance = $this->todayAttendance();
+        return $attendance && $attendance->check_out;
     }
     
     /**

@@ -123,6 +123,8 @@
                             <th class="px-4 py-3">Nama</th>
                             <th class="px-4 py-3">Jam Masuk</th>
                             <th class="px-4 py-3">Jam Pulang</th>
+                            <th class="px-4 py-3">Foto Masuk</th>
+                            <th class="px-4 py-3">Foto Pulang</th>
                             <th class="px-4 py-3">Status</th>
                             <th class="px-4 py-3">Mata Pelajaran</th>
                         </tr>
@@ -158,6 +160,52 @@
                                         {{ \Carbon\Carbon::parse($attendance->check_out)->format('H:i') }}
                                     @else
                                         <span class="text-gray-400">-</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3">
+                                    @if($attendance->image)
+                                        @php
+                                            $images = explode('|', $attendance->image);
+                                            $checkinImage = $images[0] ?? null;
+                                        @endphp
+                                        @if($checkinImage)
+                                            <button onclick="showImageModal('{{ asset('storage/'.$checkinImage) }}', 'Foto Absen Masuk - {{ $attendance->user->name }}')" 
+                                                    class="relative group">
+                                                <img src="{{ asset('storage/'.$checkinImage) }}" 
+                                                     alt="Foto Masuk" 
+                                                     class="h-12 w-12 object-cover rounded-lg border border-gray-300 hover:opacity-75 transition">
+                                                <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-lg opacity-0 group-hover:opacity-100 transition">
+                                                    <i class="fas fa-search-plus text-white"></i>
+                                                </div>
+                                            </button>
+                                        @else
+                                            <span class="text-gray-400 text-xs">Tidak ada foto</span>
+                                        @endif
+                                    @else
+                                        <span class="text-gray-400 text-xs">Tidak ada foto</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3">
+                                    @if($attendance->image)
+                                        @php
+                                            $images = explode('|', $attendance->image);
+                                            $checkoutImage = $images[1] ?? null;
+                                        @endphp
+                                        @if($checkoutImage)
+                                            <button onclick="showImageModal('{{ asset('storage/'.$checkoutImage) }}', 'Foto Absen Pulang - {{ $attendance->user->name }}')" 
+                                                    class="relative group">
+                                             9  <img src="{{ asset('storage/'.$checkoutImage) }}" 
+                                                     alt="Foto Pulang" 
+                                                     class="h-12 w-12 object-cover rounded-lg border border-gray-300 hover:opacity-75 transition">
+                                                <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-lg opacity-0 group-hover:opacity-100 transition">
+                                                    <i class="fas fa-search-plus text-white"></i>
+                                                </div>
+                                            </button>
+                                        @else
+                                            <span class="text-gray-400 text-xs">Belum absen pulang</span>
+                                        @endif
+                                    @else
+                                        <span class="text-gray-400 text-xs">Tidak ada foto</span>
                                     @endif
                                 </td>
                                 <td class="px-4 py-3">
@@ -210,4 +258,44 @@
             </div>
         </div>
     </div>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4" onclick="closeImageModal()">
+        <div class="relative max-w-4xl w-full" onclick="event.stopPropagation()">
+            <button onclick="closeImageModal()" class="absolute top-4 right-4 text-white bg-red-600 hover:bg-red-700 rounded-full w-10 h-10 flex items-center justify-center z-10">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="bg-white rounded-lg overflow-hidden">
+                <div class="bg-gray-800 text-white px-6 py-4">
+                    <h3 id="imageModalTitle" class="text-lg font-semibold">Foto Absensi</h3>
+                </div>
+                <div class="p-4 flex justify-center">
+                    <img id="imageModalImg" src="" alt="Preview" class="max-w-full max-h-[70vh] object-contain rounded">
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@section('scripts')
+<script>
+    function showImageModal(imageSrc, title) {
+        document.getElementById('imageModalImg').src = imageSrc;
+        document.getElementById('imageModalTitle').textContent = title;
+        document.getElementById('imageModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeImageModal() {
+        document.getElementById('imageModal').classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+
+    // Close modal with ESC key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeImageModal();
+        }
+    });
+</script>
 @endsection

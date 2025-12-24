@@ -21,11 +21,10 @@
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Total Users</p>
+                    <p class="text-sm font-medium text-gray-600">Jumlah User</p>
                     <p class="text-2xl font-bold text-gray-900 mt-1">{{ number_format($totalUsers) }}</p>
                     <div class="flex items-center mt-2">
-                        <span class="text-sm text-green-600 font-medium">+{{ $todayRegistrations }}</span>
-                        <span class="text-sm text-gray-500 ml-2">hari ini</span>
+                        <span class="text-sm text-gray-500">Total seluruh user</span>
                     </div>
                 </div>
                 <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -34,82 +33,55 @@
             </div>
         </div>
 
-        <!-- Total Admins -->
+        <!-- Absen Hari Ini -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Total Admin</p>
-                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ number_format($totalAdmins) }}</p>
+                    <p class="text-sm font-medium text-gray-600">Absen Hari Ini</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ number_format($absenHariIni) }}</p>
                     <div class="flex items-center mt-2">
-                        <span class="text-sm text-blue-600 font-medium">{{ number_format($totalRegularUsers) }}</span>
-                        <span class="text-sm text-gray-500 ml-2">regular users</span>
+                        <span class="text-sm text-gray-500">Yang sudah absen</span>
                     </div>
                 </div>
                 <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                    <i class="fas fa-user-shield text-green-600"></i>
+                    <i class="fas fa-clipboard-check text-green-600"></i>
                 </div>
             </div>
         </div>
 
-        <!-- Today Logins -->
+        <!-- Ijin Hari Ini -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Login Hari Ini</p>
-                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ number_format($todayLogins) }}</p>
+                    <p class="text-sm font-medium text-gray-600">Ijin Hari Ini</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ number_format($ijinHariIni) }}</p>
                     <div class="flex items-center mt-2">
-                        <span class="text-sm text-purple-600 font-medium">{{ $thisWeekRegistrations }}</span>
-                        <span class="text-sm text-gray-500 ml-2">minggu ini</span>
+                        <span class="text-sm text-gray-500">Yang sedang ijin</span>
                     </div>
                 </div>
-                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                    <i class="fas fa-sign-in-alt text-purple-600"></i>
+                <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-calendar-times text-yellow-600"></i>
                 </div>
             </div>
         </div>
 
-        <!-- Audit Logs -->
+        <!-- Terlambat Hari Ini -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Total Audit Log</p>
-                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ number_format($totalAuditLogs) }}</p>
+                    <p class="text-sm font-medium text-gray-600">Terlambat Hari Ini</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ number_format($terlambatHariIni) }}</p>
                     <div class="flex items-center mt-2">
-                        <span class="text-sm text-orange-600 font-medium">{{ $thisMonthRegistrations }}</span>
-                        <span class="text-sm text-gray-500 ml-2">bulan ini</span>
+                        <span class="text-sm text-gray-500">Yang datang terlambat</span>
                     </div>
                 </div>
-                <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                    <i class="fas fa-clipboard-list text-orange-600"></i>
+                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-clock text-red-600"></i>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Charts Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <!-- User Growth Chart -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Pertumbuhan User</h3>
-                <div class="text-sm text-gray-500">7 Bulan Terakhir</div>
-            </div>
-            <div class="relative h-64">
-                <canvas id="userGrowthChart"></canvas>
-            </div>
-        </div>
-
-        <!-- Login Statistics -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Statistik Login</h3>
-                <div class="text-sm text-gray-500">7 Hari Terakhir</div>
-            </div>
-            <div class="relative h-64">
-                <canvas id="loginStatsChart"></canvas>
-            </div>
-        </div>
-    </div>
     <!-- Data Tables Section -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Recent Users -->
@@ -185,140 +157,4 @@
             </div>
         </div>
     </div>
-@endsection
-
-@section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // User Growth Chart
-    const userGrowthCtx = document.getElementById('userGrowthChart');
-    if (userGrowthCtx) {
-        new Chart(userGrowthCtx, {
-            type: 'line',
-            data: {
-                labels: @json($userGrowthData['months']),
-                datasets: [{
-                    label: 'User Baru',
-                    data: @json($userGrowthData['userCounts']),
-                    borderColor: 'rgb(59, 130, 246)',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    borderWidth: 2,
-                    tension: 0.4,
-                    fill: true,
-                    pointBackgroundColor: 'rgb(59, 130, 246)',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 20
-                        }
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleColor: 'white',
-                        bodyColor: 'white',
-                        borderColor: 'rgba(59, 130, 246, 1)',
-                        borderWidth: 1
-                    }
-                },
-                scales: {
-                    x: {
-                        display: true,
-                        grid: {
-                            display: false
-                        }
-                    },
-                    y: {
-                        display: true,
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.1)'
-                        },
-                        ticks: {
-                            precision: 0
-                        }
-                    }
-                },
-                interaction: {
-                    mode: 'nearest',
-                    axis: 'x',
-                    intersect: false
-                }
-            }
-        });
-    }
-
-    // Login Statistics Chart
-    const loginStatsCtx = document.getElementById('loginStatsChart');
-    if (loginStatsCtx) {
-        new Chart(loginStatsCtx, {
-            type: 'bar',
-            data: {
-                labels: @json($loginStats['days']),
-                datasets: [{
-                    label: 'Login',
-                    data: @json($loginStats['loginCounts']),
-                    backgroundColor: 'rgba(168, 85, 247, 0.8)',
-                    borderColor: 'rgba(168, 85, 247, 1)',
-                    borderWidth: 1,
-                    borderRadius: 6,
-                    borderSkipped: false
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 20
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleColor: 'white',
-                        bodyColor: 'white',
-                        borderColor: 'rgba(168, 85, 247, 1)',
-                        borderWidth: 1
-                    }
-                },
-                scales: {
-                    x: {
-                        display: true,
-                        grid: {
-                            display: false
-                        }
-                    },
-                    y: {
-                        display: true,
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.1)'
-                        },
-                        ticks: {
-                            precision: 0
-                        }
-                    }
-                }
-            }
-        });
-    }
-});
-</script>
 @endsection

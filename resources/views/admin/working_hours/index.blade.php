@@ -35,7 +35,6 @@
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Nama</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Jam Masuk</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Jam Pulang</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Jumlah User</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Aksi</th>
                     </tr>
                 </thead>
@@ -46,20 +45,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $jam->nama }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ $jam->jam_masuk }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ $jam->jam_pulang }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                {{ $jam->users_count ?? $jam->users->count() }} User
-                            </span>
-                        </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                            {{-- Manage Users Button --}}
-                            <a href="{{ route('admin.working-hours.users', $jam->id) }}" title="Tambah User"
-                                class="inline-flex items-center p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                                </svg>
-                            </a>
-
                             {{-- Edit Button --}}
                             <a href="{{ route('admin.working-hours.edit', $jam->id) }}" title="Edit"
                                 class="inline-flex items-center p-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors">

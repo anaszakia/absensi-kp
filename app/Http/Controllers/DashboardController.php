@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\AuditLog;
+use App\Models\Attendance;
+use App\Models\LeaveRequest;
+use App\Models\WorkingHour;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -41,69 +44,30 @@ class DashboardController extends Controller
 
     public function adminDashboard()
     {
+        // Ambil jam kerja umum
+        $workingHour = WorkingHour::where('nama', 'Jam Kerja Umum')->first();
+        $jamMasuk = $workingHour ? Carbon::parse($workingHour->jam_masuk) : Carbon::parse('08:00:00');
+        
+        // Hitung jumlah terlambat hari ini
+        $terlambatHariIni = Attendance::whereDate('date', today())
+            ->whereNotNull('check_in')
+            ->where(function($query) use ($jamMasuk) {
+                $query->whereRaw("TIME(check_in) > ?", [$jamMasuk->format('H:i:s')]);
+            })
+            ->count();
+        
         // Data untuk admin dashboard
         $data = [
             'totalUsers' => User::count(),
-            'totalAdmins' => User::where('role', 'admin')->count(),
-            'totalRegularUsers' => User::where('role', 'user')->count(),
-            'todayRegistrations' => User::whereDate('created_at', today())->count(),
-            'thisWeekRegistrations' => User::whereBetween('created_at', [
-                Carbon::now()->startOfWeek(),
-                Carbon::now()->endOfWeek()
-            ])->count(),
-            'thisMonthRegistrations' => User::whereMonth('created_at', Carbon::now()->month)
-                ->whereYear('created_at', Carbon::now()->year)
+            'absenHariIni' => Attendance::whereDate('date', today())->count(),
+            'ijinHariIni' => LeaveRequest::whereDate('date', today())
+                ->where('status', 'approved')
                 ->count(),
-            'todayLogins' => AuditLog::where('action', 'Login')
-                ->whereDate('created_at', today())
-                ->count(),
-            'totalAuditLogs' => AuditLog::count(),
+            'terlambatHariIni' => $terlambatHariIni,
             'recentUsers' => User::latest()->take(5)->get(),
             'recentActivity' => AuditLog::with('user')->latest()->take(10)->get(),
-            'userGrowthData' => $this->getUserGrowthData(),
-            'loginStats' => $this->getLoginStats(),
         ];
         
         return view('admin.dashboard', $data);
-    }
-    
-    private function getUserGrowthData()
-    {
-        $months = [];
-        $userCounts = [];
-        
-        for ($i = 6; $i >= 0; $i--) {
-            $date = Carbon::now()->subMonths($i);
-            $months[] = $date->format('M Y');
-            $count = User::whereYear('created_at', $date->year)
-                ->whereMonth('created_at', $date->month)
-                ->count();
-            $userCounts[] = $count;
-        }
-        
-        return [
-            'months' => $months,
-            'userCounts' => $userCounts
-        ];
-    }
-    
-    private function getLoginStats()
-    {
-        $days = [];
-        $loginCounts = [];
-        
-        for ($i = 6; $i >= 0; $i--) {
-            $date = Carbon::now()->subDays($i);
-            $days[] = $date->format('M d');
-            $count = AuditLog::where('action', 'Login')
-                ->whereDate('created_at', $date)
-                ->count();
-            $loginCounts[] = $count;
-        }
-        
-        return [
-            'days' => $days,
-            'loginCounts' => $loginCounts
-        ];
     }
 }

@@ -3,6 +3,7 @@
 @section('title', 'Absensi')
 
 @section('content')
+<div x-data="{ openCamera(type) { Alpine.store('camera').type = type; Alpine.store('camera').isOpen = true; } }">
     <!-- Welcome Section -->
     <div class="mb-6">
         <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl shadow-lg p-6 md:p-8 text-white relative overflow-hidden">
@@ -30,15 +31,9 @@
                     <div class="mt-4">
                         <div class="bg-white bg-opacity-20 rounded-lg px-4 py-2 inline-flex items-center">
                             <span class="text-sm font-semibold">Status absensi hari ini:</span>
-                            @php
-                                $attendances = $user->todayAttendances();
-                                $hasCompleteAttendance = $attendances->where('check_out', '!=', null)->count() > 0;
-                                $hasCheckInOnly = $attendances->where('check_in', '!=', null)->where('check_out', null)->count() > 0;
-                            @endphp
-                            
-                            @if($hasCompleteAttendance)
+                            @if($todayAttendance && $todayAttendance->check_in && $todayAttendance->check_out)
                                 <span class="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full font-medium">Selesai</span>
-                            @elseif($hasCheckInOnly)
+                            @elseif($todayAttendance && $todayAttendance->check_in)
                                 <span class="ml-2 px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full font-medium">Absen Masuk</span>
                             @else
                                 <span class="ml-2 px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full font-medium">Belum Absen</span>
@@ -46,6 +41,56 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Camera Permission Info Banner -->
+    <div x-data="{ show: true, testCamera: false }" x-show="show" class="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-sm">
+        <div class="flex items-start justify-between">
+            <div class="flex items-start flex-1">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-info-circle text-blue-600 text-xl mt-1"></i>
+                </div>
+                <div class="ml-3 flex-1">
+                    <h3 class="text-sm font-semibold text-blue-900 mb-1">
+                        Absensi Memerlukan Akses Kamera
+                    </h3>
+                    <p class="text-sm text-blue-800 mb-2">
+                        Untuk absensi, sistem akan meminta izin mengakses kamera Anda untuk mengambil foto.
+                    </p>
+                    <div class="text-xs text-blue-700 space-y-1">
+                        <p><strong>Tips agar tidak perlu izin berulang:</strong></p>
+                        <ul class="list-disc list-inside ml-2 space-y-0.5">
+                            <li>Pastikan menggunakan <strong>localhost</strong> atau <strong>https://</strong></li>
+                            <li>Saat muncul popup, klik <strong>"Izinkan"</strong> atau <strong>"Allow"</strong></li>
+                            <li>Centang <strong>"Ingat keputusan"</strong> jika ada opsinya</li>
+                        </ul>
+                    </div>
+                    <button @click="testCamera = !testCamera" 
+                            class="mt-3 inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors">
+                        <i class="fas fa-video mr-1.5"></i>
+                        <span x-text="testCamera ? 'Tutup Test Kamera' : 'Test Kamera Sekarang'"></span>
+                    </button>
+                </div>
+            </div>
+            <button @click="show = false" class="ml-3 text-blue-400 hover:text-blue-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <!-- Test Camera Section -->
+        <div x-show="testCamera" x-transition class="mt-4 pt-4 border-t border-blue-200">
+            <div class="bg-white rounded-lg p-3">
+                <p class="text-sm text-gray-700 mb-2">Klik tombol di bawah untuk test akses kamera:</p>
+                <button @click="openCamera('test')" 
+                        class="w-full md:w-auto px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors">
+                    <i class="fas fa-camera mr-2"></i>Buka Kamera untuk Test
+                </button>
+                <p class="text-xs text-gray-500 mt-2">
+                    <i class="fas fa-lightbulb text-yellow-500 mr-1"></i>
+                    Jika berhasil, Anda sudah bisa menggunakan fitur absensi dengan kamera.
+                </p>
             </div>
         </div>
     </div>
@@ -79,92 +124,30 @@
         <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-md p-5 border border-purple-200 hover:shadow-lg transition-shadow">
             <div class="flex items-center">
                 <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center mr-3 shadow-md flex-shrink-0">
-                    <i class="fas fa-book text-white text-lg"></i>
+                    <i class="fas fa-briefcase text-white text-lg"></i>
                 </div>
                 <div class="min-w-0">
-                    <p class="text-xs font-medium text-purple-600 mb-1">Jadwal Hari Ini</p>
-                    <p class="text-lg font-bold text-gray-900 truncate">{{ $todaySchedules->count() }} Mata Pelajaran</p>
-                    <p class="text-xs font-medium text-gray-600">{{ now()->locale('id')->dayName }}</p>
+                    <p class="text-xs font-medium text-purple-600 mb-1">Jam Kerja</p>
+                    @if($workHours)
+                        <p class="text-lg font-bold text-gray-900 truncate">{{ \Carbon\Carbon::parse($workHours->jam_masuk)->format('H:i') }} - {{ \Carbon\Carbon::parse($workHours->jam_pulang)->format('H:i') }}</p>
+                    @else
+                        <p class="text-lg font-bold text-gray-900 truncate">Belum diatur</p>
+                    @endif
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Jadwal dan Status Kehadiran Hari Ini -->
+    <!-- Status Kehadiran Hari Ini -->
     <div class="mb-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Jadwal Mata Pelajaran Hari Ini</h3>
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Status Kehadiran Hari Ini</h3>
         
-        @if($todaySchedules->count() > 0)
-            <div class="grid grid-cols-1 gap-4">
-            @foreach($todaySchedules as $schedule)
-                @php
-                    $attendance = $user->todayAttendanceForSchedule($schedule->id);
-                @endphp
-                <!-- Schedule Card -->
-                <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
-                    <div class="h-1.5 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
-                    <div class="p-5">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h4 class="text-lg font-bold text-gray-900">{{ $schedule->subject->name }}</h4>
-                                <p class="text-sm text-gray-600">{{ \Carbon\Carbon::parse($schedule->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($schedule->end_time)->format('H:i') }}</p>
-                                @if($schedule->classroom)
-                                    <p class="text-sm text-gray-600">Ruang: {{ $schedule->classroom }}</p>
-                                @endif
-                            </div>
-                            <div>
-                                @if($attendance && $attendance->check_in && $attendance->check_out)
-                                    <span class="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full font-medium">Selesai</span>
-                                @elseif($attendance && $attendance->check_in)
-                                    <span class="px-3 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full font-medium">Absen Masuk</span>
-                                @else
-                                    <span class="px-3 py-1 text-xs bg-red-100 text-red-800 rounded-full font-medium">Belum Absen</span>
-                                @endif
-                            </div>
-                        </div>
-                        
-                        <div class="flex flex-col sm:flex-row sm:justify-between gap-2 mt-4">
-                            @if(!$attendance || !$attendance->check_in)
-                                <form action="{{ route('user.attendance.check-in') }}" method="POST" class="flex-1">
-                                    @csrf
-                                    <input type="hidden" name="user_schedule_id" value="{{ $schedule->id }}">
-                                    <button type="submit" class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg text-sm flex items-center justify-center transition-colors">
-                                        <i class="fas fa-sign-in-alt mr-2"></i> Absen Masuk
-                                    </button>
-                                </form>
-                            @elseif($attendance && $attendance->check_in && !$attendance->check_out)
-                                <form action="{{ route('user.attendance.check-out') }}" method="POST" class="flex-1">
-                                    @csrf
-                                    <input type="hidden" name="user_schedule_id" value="{{ $schedule->id }}">
-                                    <button type="submit" class="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg text-sm flex items-center justify-center transition-colors">
-                                        <i class="fas fa-sign-out-alt mr-2"></i> Absen Pulang
-                                    </button>
-                                </form>
-                            @else
-                                <div class="flex-1 px-4 py-2 bg-gray-200 text-gray-600 font-medium rounded-lg text-sm text-center">
-                                    <i class="fas fa-check-circle mr-2"></i> Absensi Selesai
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            @endforeach
-            </div>
-        @else
-            <div class="bg-white rounded-xl shadow-md p-5 border border-gray-200 text-center">
-                <i class="fas fa-calendar-day text-gray-400 text-4xl mb-2"></i>
-                <h4 class="text-lg font-medium text-gray-900">Tidak ada jadwal hari ini</h4>
-                <p class="text-gray-600">Anda tidak memiliki jadwal mata pelajaran untuk hari {{ now()->locale('id')->dayName }}</p>
-            </div>
-        @endif
-        
-        <!-- Status Card Lama - kita sembunyikan untuk sementara -->
-        <div class="hidden mt-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <!-- Check-in Status Card -->
             <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
                 <div class="h-1.5 bg-gradient-to-r from-green-400 to-blue-500"></div>
                 <div class="p-5">
-                    @if(false)
+                    @if($todayAttendance && $todayAttendance->check_in)
                         @if($todayAttendance->status == 'tepat_waktu')
                             <div class="flex items-start">
                                 <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mr-3 shadow-md flex-shrink-0">
@@ -177,7 +160,7 @@
                                             Tepat Waktu
                                         </span>
                                         <span class="text-sm text-gray-600">
-                                            {{ $todayAttendance->check_in ? \Carbon\Carbon::parse($todayAttendance->check_in)->format('H:i') : '-' }}
+                                            {{ \Carbon\Carbon::parse($todayAttendance->check_in)->format('H:i') }}
                                         </span>
                                     </div>
                                 </div>
@@ -194,7 +177,7 @@
                                             Terlambat
                                         </span>
                                         <span class="text-sm text-gray-600">
-                                            {{ $todayAttendance->check_in ? \Carbon\Carbon::parse($todayAttendance->check_in)->format('H:i') : '-' }}
+                                            {{ \Carbon\Carbon::parse($todayAttendance->check_in)->format('H:i') }}
                                         </span>
                                     </div>
                                 </div>
@@ -219,8 +202,8 @@
                                 <i class="fas fa-user-clock text-white text-lg"></i>
                             </div>
                             <div class="min-w-0 flex-1">
-                                <p class="text-base font-semibold text-gray-900 mb-1">Belum Absen</p>
-                                <p class="text-sm text-gray-600">Silakan lakukan absen dengan mengklik tombol di bawah</p>
+                                <p class="text-base font-semibold text-gray-900 mb-1">Belum Absen Masuk</p>
+                                <p class="text-sm text-gray-600">Silakan lakukan absen masuk dengan tombol di bawah</p>
                             </div>
                         </div>
                     @endif
@@ -273,12 +256,72 @@
             </div>
         </div>
 
-        <!-- Attendance Action Buttons -->
+        <!-- Success/Error Messages -->
+    @if(session('success'))
+        <div class="mt-4 bg-green-50 border border-green-200 rounded-xl p-4 shadow-sm" x-data="{ show: true }" x-show="show">
+            <div class="flex items-start justify-between">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-green-800">{{ session('success') }}</p>
+                    </div>
+                </div>
+                <button @click="show = false" class="text-green-500 hover:text-green-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="mt-4 bg-red-50 border border-red-200 rounded-xl p-4 shadow-sm" x-data="{ show: true }" x-show="show">
+            <div class="flex items-start justify-between">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-500 text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-red-800">{{ session('error') }}</p>
+                    </div>
+                </div>
+                <button @click="show = false" class="text-red-500 hover:text-red-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="mt-4 bg-red-50 border border-red-200 rounded-xl p-4 shadow-sm" x-data="{ show: true }" x-show="show">
+            <div class="flex items-start justify-between">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-500 text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-red-800 mb-2">Terjadi kesalahan:</p>
+                        <ul class="list-disc list-inside text-sm text-red-700">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+                <button @click="show = false" class="text-red-500 hover:text-red-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    @endif
+
+    <!-- Attendance Action Buttons -->
         <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             @if(!$todayAttendance || !$todayAttendance->check_in)
                 <!-- Check In Form -->
                 <div class="w-full">
-                    <form action="{{ route('user.attendance.check-in') }}" method="POST" class="bg-white p-5 rounded-xl shadow-md border border-gray-200">
+                    <form id="checkin-form" action="{{ route('user.attendance.check-in') }}" method="POST" class="bg-white p-5 rounded-xl shadow-md border border-gray-200">
                         @csrf
                         <div class="flex items-center mb-4">
                             <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3 shadow-sm flex-shrink-0">
@@ -287,27 +330,23 @@
                             <h4 class="text-lg font-semibold text-gray-900">Absen Masuk</h4>
                         </div>
                         
-                        @if($todaySchedules->count() > 0)
+                        @if($workHours)
                             <div class="mb-4 bg-green-50 p-3 rounded-lg border border-green-200">
                                 <p class="text-sm text-green-800">
-                                    <i class="fas fa-info-circle mr-1"></i>
-                                    Jadwal Hari Ini: <span class="font-medium">{{ $todaySchedules->count() }} mata pelajaran</span>
+                                    <i class="fas fa-clock mr-1"></i>
+                                    Jam Masuk: <span class="font-medium">{{ \Carbon\Carbon::parse($workHours->jam_masuk)->format('H:i') }}</span>
                                 </p>
                                 <p class="text-xs text-green-700 mt-1">
-                                    Silakan pilih jadwal pada daftar di atas
+                                    Toleransi keterlambatan: 15 menit
                                 </p>
                             </div>
-                            <input type="hidden" name="notes" value="-">
-                            <button type="submit" 
-                                class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 rounded-lg shadow hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-green-300 transition-all font-medium text-sm">
-                                <i class="fas fa-sign-in-alt mr-2"></i>Absen Masuk Sekarang
-                            </button>
-                        @else
-                            <div class="text-center p-4 bg-red-50 rounded-lg border border-red-200">
-                                <i class="fas fa-exclamation-triangle text-red-500 text-xl mb-2"></i>
-                                <p class="text-sm text-red-600 font-medium">Anda tidak memiliki jadwal mata pelajaran hari ini.</p>
-                            </div>
                         @endif
+                        <input type="hidden" name="notes" value="-">
+                        <input type="hidden" name="image" x-ref="checkinImage">
+                        <button type="button" @click="openCamera('checkin')"
+                            class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 rounded-lg shadow hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-green-300 transition-all font-medium text-sm">
+                            <i class="fas fa-camera mr-2"></i>Ambil Foto & Absen Masuk
+                        </button>
                     </form>
                 </div>
             @endif
@@ -315,7 +354,7 @@
             @if($todayAttendance && $todayAttendance->check_in && !$todayAttendance->check_out)
                 <!-- Check Out Form -->
                 <div class="w-full">
-                    <form action="{{ route('user.attendance.check-out') }}" method="POST" class="bg-white p-5 rounded-xl shadow-md border border-gray-200">
+                    <form id="checkout-form" action="{{ route('user.attendance.check-out') }}" method="POST" class="bg-white p-5 rounded-xl shadow-md border border-gray-200">
                         @csrf
                         <div class="flex items-center mb-4">
                             <div class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center mr-3 shadow-sm flex-shrink-0">
@@ -324,19 +363,22 @@
                             <h4 class="text-lg font-semibold text-gray-900">Absen Pulang</h4>
                         </div>
                         
-                        <div class="mb-4 bg-indigo-50 p-3 rounded-lg border border-indigo-200">
-                            <p class="text-sm text-indigo-800">
-                                <i class="fas fa-info-circle mr-1"></i>
-                                <span class="font-medium">Absen Pulang</span>
-                            </p>
-                            <p class="text-xs text-indigo-700 mt-1">
-                                Silakan klik tombol di bawah untuk absen pulang
-                            </p>
-                        </div>
+                        @if($workHours)
+                            <div class="mb-4 bg-indigo-50 p-3 rounded-lg border border-indigo-200">
+                                <p class="text-sm text-indigo-800">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    Jam Pulang: <span class="font-medium">{{ \Carbon\Carbon::parse($workHours->jam_pulang)->format('H:i') }}</span>
+                                </p>
+                                <p class="text-xs text-indigo-700 mt-1">
+                                    Silakan klik tombol untuk absen pulang
+                                </p>
+                            </div>
+                        @endif
                         <input type="hidden" name="notes" value="-">
-                        <button type="submit" 
+                        <input type="hidden" name="image" x-ref="checkoutImage">
+                        <button type="button" @click="openCamera('checkout')"
                             class="w-full bg-gradient-to-r from-indigo-500 to-indigo-600 text-white py-3 px-4 rounded-lg shadow hover:from-indigo-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all font-medium text-sm">
-                            <i class="fas fa-sign-out-alt mr-2"></i>Absen Pulang Sekarang
+                            <i class="fas fa-camera mr-2"></i>Ambil Foto & Absen Pulang
                         </button>
                     </form>
                 </div>
@@ -360,7 +402,6 @@
                     <thead>
                         <tr class="bg-gray-50">
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mata Pelajaran</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Masuk</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pulang</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -374,18 +415,11 @@
                                         <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
                                             <span class="text-xs font-bold text-blue-600">{{ \Carbon\Carbon::parse($attendance->date)->format('d') }}</span>
                                         </div>
-                                        <span class="text-sm font-medium text-gray-900">{{ \Carbon\Carbon::parse($attendance->date)->format('M Y') }}</span>
+                                        <div>
+                                            <span class="text-sm font-medium text-gray-900">{{ \Carbon\Carbon::parse($attendance->date)->format('d M Y') }}</span>
+                                            <p class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($attendance->date)->locale('id')->dayName }}</p>
+                                        </div>
                                     </div>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <p class="text-sm font-medium text-gray-900">{{ $attendance->userSchedule->subject->name ?? 'Tidak ada jadwal' }}</p>
-                                    <p class="text-xs text-gray-500">
-                                        @if($attendance->userSchedule)
-                                            {{ \Carbon\Carbon::parse($attendance->userSchedule->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($attendance->userSchedule->end_time)->format('H:i') }}
-                                        @else
-                                            -
-                                        @endif
-                                    </p>
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap">
                                     @if($attendance->check_in)
@@ -423,7 +457,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-4 py-10 text-center">
+                                <td colspan="4" class="px-4 py-10 text-center">
                                     <div class="flex flex-col items-center">
                                         <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
                                             <i class="fas fa-calendar-times text-gray-400 text-2xl"></i>
@@ -439,10 +473,22 @@
             </div>
         </div>
     </div>
+
+    <!-- Include Camera Modal -->
+    @include('user.camera_modal')
+</div>
 @endsection
 
 @section('scripts')
 <script>
+    // Auto scroll to alert messages
+    document.addEventListener('DOMContentLoaded', function() {
+        const alerts = document.querySelectorAll('.bg-green-50, .bg-red-50');
+        if (alerts.length > 0) {
+            alerts[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+
     // Function to update current time every second
     function updateCurrentTime() {
         const currentTimeElement = document.getElementById('current-time');
@@ -475,10 +521,39 @@
         });
     }
 
-    // Call the functions when the page loads
+    // Alpine.js Store for Camera
+    document.addEventListener('alpine:init', () => {
+        Alpine.store('camera', {
+            isOpen: false,
+            type: null,
+            imageData: null
+        });
+    });
+
+    function openCamera(type) {
+        Alpine.store('camera').type = type;
+        Alpine.store('camera').isOpen = true;
+    }
+
+    // Watch for image data changes and update form
     document.addEventListener('DOMContentLoaded', function() {
         updateCurrentTime();
         setupForms();
+
+        // Watch for camera store changes
+        Alpine.effect(() => {
+            const imageData = Alpine.store('camera').imageData;
+            if (imageData) {
+                const form = Alpine.store('camera').type === 'checkin' 
+                    ? document.getElementById('checkin-form')
+                    : document.getElementById('checkout-form');
+                
+                const imageInput = form.querySelector('input[name="image"]');
+                if (imageInput) {
+                    imageInput.value = imageData;
+                }
+            }
+        });
     });
 </script>
 @endsection

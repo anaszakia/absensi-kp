@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Models\AuditLog;
 use App\Models\Attendance;
 use App\Models\LeaveRequest;
-use App\Models\UserSchedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
@@ -19,7 +18,7 @@ class LeaveRequestController extends Controller
     public function index()
     {
         $user = auth()->user();
-        $leaveRequests = $user->leaveRequests()->with('userSchedule.subject')->latest()->paginate(10);
+        $leaveRequests = $user->leaveRequests()->latest()->paginate(10);
         
         return view('user.leave_requests.index', compact('leaveRequests'));
     }
@@ -29,26 +28,7 @@ class LeaveRequestController extends Controller
      */
     public function create()
     {
-        $user = auth()->user();
-        $userSchedules = $user->schedules()->with('subject')->where('is_active', true)->get();
-        
-        // Jika user tidak memiliki jadwal, redirect kembali dengan pesan error
-        if ($userSchedules->isEmpty()) {
-            return redirect()->route('user.dashboard')
-                ->with('error', 'Anda belum memiliki jadwal mata pelajaran. Silakan hubungi admin.');
-        }
-        
-        // Group jadwal berdasarkan hari
-        $dayOrder = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
-        $schedulesByDay = [];
-        
-        foreach ($dayOrder as $day) {
-            $schedulesByDay[$day] = $userSchedules->filter(function($schedule) use ($day) {
-                return $schedule->day == $day;
-            })->sortBy('start_time');
-        }
-        
-        return view('user.leave_requests.create', compact('schedulesByDay'));
+        return view('user.leave_requests.create');
     }
 
     /**
@@ -60,56 +40,25 @@ class LeaveRequestController extends Controller
         
         $request->validate([
             'date' => 'required|date|after_or_equal:today',
-            'user_schedule_id' => 'required|exists:user_schedules,id',
             'reason' => 'required|string|min:5',
             'attachment' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
         ]);
         
-        // Check if there's already attendance or leave request for this date and schedule
+        // Check if there's already attendance or leave request for this date
         $existingAttendance = $user->attendances()
-            ->where('user_schedule_id', $request->user_schedule_id)
             ->whereDate('date', $request->date)
             ->first();
             
         $existingLeaveRequest = $user->leaveRequests()
-            ->where('user_schedule_id', $request->user_schedule_id)
             ->whereDate('date', $request->date)
             ->first();
-            
-        // Verify the selected schedule belongs to this user
-        $userSchedule = UserSchedule::findOrFail($request->user_schedule_id);
-        if ($userSchedule->user_id != $user->id) {
-            return back()->with('error', 'Jadwal yang dipilih bukan milik Anda.');
-        }
-        
-        // Verify the requested date matches the schedule day
-        $requestDate = Carbon::parse($request->date);
-        $dayName = $requestDate->locale('id')->isoFormat('dddd');
-        // Convert English day names to Indonesian
-        $dayMapping = [
-            'Monday' => 'Senin',
-            'Tuesday' => 'Selasa',
-            'Wednesday' => 'Rabu',
-            'Thursday' => 'Kamis',
-            'Friday' => 'Jumat',
-            'Saturday' => 'Sabtu',
-            'Sunday' => 'Minggu',
-        ];
-        
-        if (isset($dayMapping[$dayName])) {
-            $dayName = $dayMapping[$dayName];
-        }
-        
-        if ($userSchedule->day != $dayName) {
-            return back()->with('error', 'Jadwal yang dipilih tidak sesuai dengan hari pada tanggal tersebut. Hari jadwal: ' . $userSchedule->day . ', Hari tanggal: ' . $dayName);
-        }
         
         if ($existingAttendance) {
-            return back()->with('error', 'Anda sudah memiliki catatan absensi untuk jadwal ini pada tanggal tersebut.');
+            return back()->with('error', 'Anda sudah memiliki catatan absensi pada tanggal tersebut.');
         }
         
         if ($existingLeaveRequest) {
-            return back()->with('error', 'Anda sudah mengajukan ijin untuk jadwal ini pada tanggal tersebut.');
+            return back()->with('error', 'Anda sudah mengajukan ijin pada tanggal tersebut.');
         }
         
         // Handle file upload
@@ -121,7 +70,6 @@ class LeaveRequestController extends Controller
         // Create leave request
         $leaveRequest = LeaveRequest::create([
             'user_id' => $user->id,
-            'user_schedule_id' => $request->user_schedule_id,
             'date' => $request->date,
             'reason' => $request->reason,
             'attachment' => $attachmentPath,
@@ -131,7 +79,7 @@ class LeaveRequestController extends Controller
         AuditLog::create([
             'user_id' => $user->id,
             'action' => 'Pengajuan Ijin',
-            'description' => 'Mengajukan ijin untuk jadwal ' . $userSchedule->subject->name . ' pada tanggal ' . $request->date,
+            'description' => 'Mengajukan ijin untuk tanggal ' . $request->date,
             'ip' => $request->ip(),
             'method' => $request->method(),
             'performed_at' => now()
@@ -149,7 +97,7 @@ class LeaveRequestController extends Controller
         $status = $request->input('status', 'pending');
         $userId = $request->input('user_id');
         
-        $leaveRequests = LeaveRequest::with(['user', 'workingHour'])
+        $leaveRequests = LeaveRequest::with(['user'])
             ->when($status, function ($query, $status) {
                 if ($status !== 'all') {
                     return $query->where('status', $status);
@@ -190,7 +138,6 @@ class LeaveRequestController extends Controller
         if ($request->status == 'approved') {
             Attendance::create([
                 'user_id' => $leaveRequest->user_id,
-                'working_hour_id' => $leaveRequest->working_hour_id,
                 'date' => $leaveRequest->date,
                 'status' => 'ijin',
                 'notes' => 'Ijin: ' . $leaveRequest->reason,
