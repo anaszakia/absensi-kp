@@ -77,10 +77,14 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ $attendance->workingHour->nama }}
+                                    {{ $attendance->workingHour->nama ?? 'Jam Kerja Umum' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ $attendance->workingHour->jam_masuk }} - {{ $attendance->workingHour->jam_pulang }}
+                                    @if($attendance->workingHour)
+                                        {{ $attendance->workingHour->jam_masuk }} - {{ $attendance->workingHour->jam_pulang }}
+                                    @else
+                                        -
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     @if($attendance->check_in)
