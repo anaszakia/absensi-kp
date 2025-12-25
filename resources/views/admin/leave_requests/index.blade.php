@@ -48,7 +48,6 @@
                         <tr class="text-xs font-semibold tracking-wide text-left text-gray-500 uppercase bg-gray-100 border-b">
                             <th class="px-4 py-3">Pegawai</th>
                             <th class="px-4 py-3">Tanggal</th>
-                            <th class="px-4 py-3">Jam Kerja</th>
                             <th class="px-4 py-3">Alasan</th>
                             <th class="px-4 py-3">Bukti</th>
                             <th class="px-4 py-3">Status</th>
@@ -78,10 +77,6 @@
                                 <td class="px-4 py-3">
                                     <p class="font-medium">{{ $leave->date->format('d/m/Y') }}</p>
                                     <p class="text-xs text-gray-600">Diajukan: {{ $leave->created_at->format('d/m/Y H:i') }}</p>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <p class="font-medium">{{ $leave->workingHour->nama }}</p>
-                                    <p class="text-xs text-gray-600">{{ $leave->workingHour->jam_masuk }} - {{ $leave->workingHour->jam_pulang }}</p>
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="max-w-xs">
