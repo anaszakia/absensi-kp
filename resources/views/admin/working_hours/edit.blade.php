@@ -44,7 +44,7 @@
                         <label for="jam_masuk" class="block text-sm font-medium text-gray-700 mb-1">Jam Masuk</label>
                         <input type="time" name="jam_masuk" id="jam_masuk" 
                             class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
-                            value="{{ $workingHour->jam_masuk }}" required>
+                            value="{{ substr($workingHour->jam_masuk, 0, 5) }}" required>
                         @error('jam_masuk')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -55,7 +55,7 @@
                         <label for="jam_pulang" class="block text-sm font-medium text-gray-700 mb-1">Jam Pulang</label>
                         <input type="time" name="jam_pulang" id="jam_pulang" 
                             class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
-                            value="{{ $workingHour->jam_pulang }}" required>
+                            value="{{ substr($workingHour->jam_pulang, 0, 5) }}" required>
                         @error('jam_pulang')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror

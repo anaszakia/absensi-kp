@@ -50,7 +50,15 @@ class AttendanceController extends Controller
                 ->count(),
         ];
         
-        return view('user.dashboard', compact('user', 'workHours', 'todayAttendance', 'recentAttendances', 'monthlyStats'));
+        // Cek apakah sudah waktunya pulang
+        $canCheckOut = false;
+        if ($workHours) {
+            $jamPulang = \Carbon\Carbon::createFromFormat('H:i:s', $workHours->jam_pulang);
+            $now = now();
+            $canCheckOut = $now->format('H:i:s') >= $jamPulang->format('H:i:s');
+        }
+        
+        return view('user.dashboard', compact('user', 'workHours', 'todayAttendance', 'recentAttendances', 'monthlyStats', 'canCheckOut'));
     }
     
     /**

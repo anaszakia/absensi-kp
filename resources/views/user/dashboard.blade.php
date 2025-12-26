@@ -354,33 +354,61 @@
             @if($todayAttendance && $todayAttendance->check_in && !$todayAttendance->check_out)
                 <!-- Check Out Form -->
                 <div class="w-full">
-                    <form id="checkout-form" action="{{ route('user.attendance.check-out') }}" method="POST" class="bg-white p-5 rounded-xl shadow-md border border-gray-200">
-                        @csrf
-                        <div class="flex items-center mb-4">
-                            <div class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center mr-3 shadow-sm flex-shrink-0">
-                                <i class="fas fa-sign-out-alt text-white"></i>
+                    @if($canCheckOut)
+                        <form id="checkout-form" action="{{ route('user.attendance.check-out') }}" method="POST" class="bg-white p-5 rounded-xl shadow-md border border-gray-200">
+                            @csrf
+                            <div class="flex items-center mb-4">
+                                <div class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center mr-3 shadow-sm flex-shrink-0">
+                                    <i class="fas fa-sign-out-alt text-white"></i>
+                                </div>
+                                <h4 class="text-lg font-semibold text-gray-900">Absen Pulang</h4>
                             </div>
-                            <h4 class="text-lg font-semibold text-gray-900">Absen Pulang</h4>
+                            
+                            @if($workHours)
+                                <div class="mb-4 bg-indigo-50 p-3 rounded-lg border border-indigo-200">
+                                    <p class="text-sm text-indigo-800">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        Jam Pulang: <span class="font-medium">{{ \Carbon\Carbon::parse($workHours->jam_pulang)->format('H:i') }}</span>
+                                    </p>
+                                    <p class="text-xs text-indigo-700 mt-1">
+                                        Silakan klik tombol untuk absen pulang
+                                    </p>
+                                </div>
+                            @endif
+                            <input type="hidden" name="notes" value="-">
+                            <input type="hidden" name="image" x-ref="checkoutImage">
+                            <button type="button" @click="openCamera('checkout')"
+                                class="w-full bg-gradient-to-r from-indigo-500 to-indigo-600 text-white py-3 px-4 rounded-lg shadow hover:from-indigo-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all font-medium text-sm">
+                                <i class="fas fa-camera mr-2"></i>Ambil Foto & Absen Pulang
+                            </button>
+                        </form>
+                    @else
+                        <!-- Belum Waktunya Pulang -->
+                        <div class="bg-white p-5 rounded-xl shadow-md border border-gray-200">
+                            <div class="flex items-center mb-4">
+                                <div class="w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center mr-3 shadow-sm flex-shrink-0">
+                                    <i class="fas fa-clock text-white"></i>
+                                </div>
+                                <h4 class="text-lg font-semibold text-gray-900">Absen Pulang</h4>
+                            </div>
+                            
+                            @if($workHours)
+                                <div class="mb-4 bg-amber-50 p-3 rounded-lg border border-amber-200">
+                                    <p class="text-sm text-amber-800">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        Jam Pulang: <span class="font-medium">{{ \Carbon\Carbon::parse($workHours->jam_pulang)->format('H:i') }}</span>
+                                    </p>
+                                    <p class="text-xs text-amber-700 mt-1">
+                                        Belum waktunya absen pulang. Tombol akan aktif saat jam pulang tiba.
+                                    </p>
+                                </div>
+                            @endif
+                            <button type="button" disabled
+                                class="w-full bg-gray-300 text-gray-500 py-3 px-4 rounded-lg shadow cursor-not-allowed font-medium text-sm">
+                                <i class="fas fa-lock mr-2"></i>Belum Waktunya Absen Pulang
+                            </button>
                         </div>
-                        
-                        @if($workHours)
-                            <div class="mb-4 bg-indigo-50 p-3 rounded-lg border border-indigo-200">
-                                <p class="text-sm text-indigo-800">
-                                    <i class="fas fa-clock mr-1"></i>
-                                    Jam Pulang: <span class="font-medium">{{ \Carbon\Carbon::parse($workHours->jam_pulang)->format('H:i') }}</span>
-                                </p>
-                                <p class="text-xs text-indigo-700 mt-1">
-                                    Silakan klik tombol untuk absen pulang
-                                </p>
-                            </div>
-                        @endif
-                        <input type="hidden" name="notes" value="-">
-                        <input type="hidden" name="image" x-ref="checkoutImage">
-                        <button type="button" @click="openCamera('checkout')"
-                            class="w-full bg-gradient-to-r from-indigo-500 to-indigo-600 text-white py-3 px-4 rounded-lg shadow hover:from-indigo-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all font-medium text-sm">
-                            <i class="fas fa-camera mr-2"></i>Ambil Foto & Absen Pulang
-                        </button>
-                    </form>
+                    @endif
                 </div>
             @endif
         </div>
